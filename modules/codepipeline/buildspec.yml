@@ -1,0 +1,22 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t service-a .
+      - docker tag service-a:latest <aws_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com/service-a:latest
+      - docker push <aws_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com/service-a:latest
+      - echo Writing imagedefinitions.json...
+      - echo '[{"name":"service-a","imageUri":"<aws_account_id>.dkr.ecr.$AWS_REGION.amazonaws.com/service-a:latest"}]' > imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
+  discard-paths: yes
+cache:
+  paths:
+    - node_modules/**
