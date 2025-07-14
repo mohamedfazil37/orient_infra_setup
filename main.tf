@@ -26,9 +26,10 @@ module "ecs" {
   vpc_id            = module.vpc.vpc_id
   private_subnets   = module.vpc.private_subnets
   cluster_name      = "app-cluster"
-  service_sg_id     = aws_security_group.ecs_service_sg.id
-  execution_role_arn = aws_iam_role.ecs_execution_role.arn
-  task_role_arn      = aws_iam_role.ecs_task_role.arn
+  service_sg_id      = module.ecs.ecs_service_sg_id
+  execution_role_arn = module.ecs.ecs_execution_role_arn
+  task_role_arn      = module.ecs.ecs_task_role_arn
+
   service_configs   = {
     service-a = {
       image         = "<aws_account_id>.dkr.ecr.<region>.amazonaws.com/service-a:latest"
@@ -66,4 +67,28 @@ module "ecs" {
       container_mem = 512
     }
   }
+}
+
+module "codebuild" {
+  source              = "./modules/codebuild"
+  repo_names          = ["service-a", "service-b", "service-c", "service-d", "service-e"]
+  artifact_bucket_arn = module.s3.bucket_arn
+
+  buildspec_paths = {
+    "service-a" = "${path.root}/buildspecs/service-a_buildspec.yml"
+    "service-b" = "${path.root}/buildspecs/service-b_buildspec.yml"
+    "service-c" = "${path.root}/buildspecs/service-c_buildspec.yml"
+    "service-d" = "${path.root}/buildspecs/service-d_buildspec.yml"
+    "service-e" = "${path.root}/buildspecs/service-e_buildspec.yml"
+  }
+}
+
+module "codepipeline" {
+  source                 = "./modules/codepipeline"
+  repo_names             = module.codebuild.repo_names
+  artifact_bucket_name   = module.s3.bucket_name
+  github_token           = var.github_token
+  github_owner           = var.github_owner
+  ecs_cluster_name       = module.ecs.ecs_cluster_id
+  namespace_id           = var.namespace_id
 }

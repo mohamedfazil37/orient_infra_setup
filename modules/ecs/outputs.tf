@@ -13,3 +13,7 @@ output "ecs_service_arns" {
 output "ecs_task_definition_arns" {
   value = [for t in aws_ecs_task_definition.this : t.arn]
 }
+
+output "ecs_service_sg_id" {
+  value = aws_security_group.ecs_service_sg.id
+}

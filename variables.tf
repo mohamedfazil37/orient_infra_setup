@@ -16,3 +16,9 @@ variable "private_subnets" {
 
 variable "db_username" {}
 variable "db_password" {}
+
+variable "github_token" {
+  description = "GitHub personal access token for CodePipeline"
+  type        = string
+  sensitive   = true
+}
